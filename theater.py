@@ -5,7 +5,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 
 class Theater:
-    def __init__(self, areaCode='01', theaterCode='0013', date='2025.05.05'):
+    def __init__(self, areaCode='01', theaterCode='0013', date='2025.05.06'):
         self.areaCode = areaCode
         self.theaterCode = theaterCode
         self.date = date
