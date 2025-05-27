@@ -11,10 +11,8 @@ class Theater:
         self.date = date
         self.movies = []
 
-    def get_movies(self):
-        print(f"===== {self.date} =====")
-        for i, movie in enumerate(self.movies):
-            print(f"{i+1}. {movie['title']}")     
+    def get_date(self):
+        return self.date
 
     def get_movie(self, title):
         for movie in self.movies:
