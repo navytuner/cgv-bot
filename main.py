@@ -1,39 +1,23 @@
 import os
-import asyncio
 from dotenv import load_dotenv
-import telegram
-from theater import *
-from datetime import date
+from telegram.ext import ApplicationBuilder, CommandHandler
+from handler.start_handler import start
+from handler.stop_handler import stop
+from handler.status_handler import status
 
 load_dotenv()
-
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHATID = os.getenv("TELEGRAM_CHATID")
 
-async def send_movie_message(movie):
-    msg = date.today().strftime("%Y.%m.%d(%A)")
-    msg += "\n"
-    msg += movie["title"] + "\n"
-    for play in movie["plays"]:
-        msg += play["time"] + " "
-        msg += play["remainSeat"] + "석 / " + movie["totSeat"] + "석\n"
-    try:
-        bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        await bot.send_message(chat_id=TELEGRAM_CHATID, text=msg)
-        print("Message sent")
-    except Exception as e:
-        print(f"Failed to send message: {e}")
+app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-async def main():
-    while True:
-        movie_name = "썬더볼츠" # Need to be changed
-        theater = Theater('01', '0013', date.today().strftime("%Y.%m.%d")) 
-        theater.fetch_movie()
-        movie = theater.get_movie(movie_name)
-        if movie:
-            await send_movie_message(movie)
-        await asyncio.sleep(3600) # 1hour 
+
+def main():
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("stop", stop))
+    app.add_handler(CommandHandler("status", status))
+    app.run_polling()
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
-
+    main()

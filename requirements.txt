@@ -1,6 +1,7 @@
 requests
 beautifulsoup4
-python-dotenv
-python-telegram-bot
+python - dotenv
+python - telegram - bot
+python - telegram - bot[job - queue]
 selenium
-webdriver-manager
+webdriver - manager
