@@ -1,76 +1,91 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
+from movie import Movie
 
 
 class Theater:
-    def __init__(self, areaCode="01", theaterCode="0013", date="2025.05.06"):
-        self.areaCode = areaCode
-        self.theaterCode = theaterCode
-        self.date = date
+    def __init__(self, areacode="01", theatercode="0013"):
+        # Default theater: CGV Yongsan
+        self.areacode = areacode
+        self.theatercode = theatercode
         self.movies = []
 
-    def get_date(self):
-        return self.date
-
-    def get_movie(self, title):
-        for movie in self.movies:
-            if movie["title"] == title:
-                return movie
-        return None
-
-    def fetch_movie(self):
-        # Execute browser
+    def _init_web_driver(self):
         chromeOptions = webdriver.ChromeOptions()
         driver = webdriver.Chrome(
             service=Service(ChromeDriverManager().install()), options=chromeOptions
         )
+        return driver
 
-        # Fetch page source
-        url = f"http://www.cgv.co.kr/theaters/?areacode={self.areaCode}&theaterCode={self.theaterCode}&date={self.date}#menu"
-        driver.get(url)
+    def _get_page_source(self, driver, date):
+        url_base = f"http://www.cgv.co.kr/theaters/?theaterCode={self.theatercode}"
+        url_target_date = f'a[href="./iframeTheater.aspx?areacode={self.areacode}&theatercode={self.theatercode}&date={date}&screencodes=&screenratingcode=&regioncode="]'
+
+        # Switch to target date source
+        driver.get(url_base)
+        link = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, url_target_date))
+        )
+        link.click()
+
+        # Switch to iframe and get page source
         iframe = driver.find_element(By.ID, "ifrm_movie_time_table")
         driver.switch_to.frame(iframe)
-        soup = BeautifulSoup(driver.page_source, "html.parser")
+        return BeautifulSoup(driver.page_source, "html.parser")
 
-        # Select only IMAX movies
-        imax = soup.select("span.imax")
-        for item in imax:
-            colTimes = item.find_parent("div", class_="col-times")
-            infoMovie = colTimes.select_one("div.info-movie")
-            typeHall = item.find_parent("div", class_="type-hall")
-            infoHall = typeHall.select_one("div.info-hall")
-            infoTimetable = typeHall.select_one("div.info-timetable")
+    def _create_movie_obj(self, li):
+        info_movie = li.select_one("div > div.info-movie")
+        title = info_movie.select_one("a > strong").text.strip()
+        genre = info_movie.select("i")[1].text.strip()
+        runtime = info_movie.select("i")[2].text.strip()
+        open_date = info_movie.select("i")[3].text.split()[0]
+        movie = Movie(title, genre, runtime, open_date)
 
-            # movie info
-            title = infoMovie.select_one("a > strong").text.strip()
-            openDate = infoMovie.select("i")[3].text.split()[0]
-            totSeat = infoHall.select("li")[2].text.split()[1][:-1]
-            movie = {
-                "title": title,
-                "openDate": openDate,
-                "totSeat": totSeat,
-                "plays": [],
-            }
+    def display_movies(self):
+        for movie in self.movies:
+            movie.display_showtimes()
 
-            plays = typeHall.select_one("div.info-timetable").select("a")
-            for play in plays:
-                time = (
-                    play["data-playstarttime"][:2]
-                    + ":"
-                    + play["data-playstarttime"][2:]
-                )
-                remainSeat = play["data-seatremaincnt"]
+    def fetch_movies(self, date):
+        # Fetch page source
+        driver = self._init_web_driver()
+        soup = self._get_page_source(driver, date)
 
-                # append play info
-                movie["plays"].append(
-                    {
-                        "time": time,
-                        "remainSeat": remainSeat,
-                    }
+        sect_showtimes = soup.find("div", class_="sect-showtimes")
+        ul = sect_showtimes.find("ul")
+
+        for li in ul.find_all("li"):
+            movie = self._create_movie_obj(li)
+
+            halls = li.select("div > div.type-hall")
+            for hall in halls:
+                screen_type_span = hall.select_one("span.screentype")
+                if screen_type_span:
+                    screen_type = screen_type_span.select_one("span").text.strip()
+                else:
+                    # screen_type = hall.select("ul > li")[1].text.strip()
+                    screen_type = "LASER"
+                tot_seat = int(
+                    hall.select("div.info-hall > ul > li")[2].text.split()[1][:-1]
                 )
 
-            # Insert movie info
-            self.movies.append(movie)
+                timetbls = hall.select("div.info-timetable > ul > li")
+                for timetbl in timetbls:
+                    time = timetbl.select_one("em").text.strip()
+                    timetbl_info = timetbl.select_one("a")
+                    if timetbl_info:
+                        remain_seat = int(timetbl_info["data-seatremaincnt"])
+                    else:
+                        remain_seat = 0
+                    movie.insert_showtime(
+                        date, screen_type, time, remain_seat, tot_seat
+                    )
+
+
+theater = Theater()
+theater.fetch_movies("20250529")
+theater.display_movies()
