@@ -7,7 +7,7 @@ from config.settings import INTERVAL
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    result = await get_date_and_title(update, context)
+    result = await _get_date_and_title(update, context)
     if not result:
         return
     date, title = result
@@ -18,14 +18,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        theater = Theater(date=date)
+        theater = Theater()
         context.job_queue.run_repeating(
-            fetch_and_display_movieinfo,
+            _fetch_and_display_movieinfo,
             interval=INTERVAL,
             first=5,  # for immediate feedback
             chat_id=chat_id,
             name=str(chat_id),
-            data={"theater": theater, "title": title},
+            data={"theater": theater, "title": title, "date": date},
         )
 
     except Exception as e:
@@ -35,48 +35,41 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-async def get_date_and_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def _get_date_and_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
 
     if len(args) < 2:
-        await update.message.reply_text("Usage: /start 2025.05.24 Interstella")
+        await update.message.reply_text("Usage: /start 20250524 Interstella")
         return None
 
     date = args[0]
     title = " ".join(args[1:])
-    print(f"date: {date}, title: {title}")
-
-    # Validation
-    try:
-        date_obj = datetime.strptime(date, "%Y.%m.%d")
-        if date_obj.date() < datetime.now().date():
-            await update.message.reply_text(
-                "The selected date is in the past. Please select date again"
-            )
-            return None
-
-    except ValueError:
-        await update.message.reply_text("Invalid date format. Use YYYY.MM.DD")
-        return None
+    print(f"Input date: {date}, title: {title}")
     return (date, title)
 
 
-async def fetch_and_display_movieinfo(context: ContextTypes.DEFAULT_TYPE):
+async def _fetch_and_display_movieinfo(context: ContextTypes.DEFAULT_TYPE):
+    theater = context.job.data["theater"]
+    title = context.job.data["title"]
+    date = context.job.data["date"]
+
     try:
-        theater = context.job.data["theater"]
-        title = context.job.data["title"]
-
         # Fetch movie data
-        theater.fetch_movie()
+        theater.fetch_movies(date)
         movie = theater.get_movie(title)
+        movie.display_movieinfo()
+        movie.display_showtimes()
+    except:
+        print("error @ fetch_movies")
 
-        # Movie not found
+    try:
+        # Movie or showtimes not found
         if not movie:
             await context.bot.send_message(
                 chat_id=context.job.chat_id, text=f"Movie '{title}' not found"
             )
             return
-        if not movie["plays"]:
+        if len(movie.get_showtimes()) == 0:
             await context.bot.send_message(
                 chat_id=context.job.chat_id,
                 text=f"No showtimes available for '{title}'",
@@ -84,17 +77,13 @@ async def fetch_and_display_movieinfo(context: ContextTypes.DEFAULT_TYPE):
             return
 
         # Build message
-        msg = f"{theater.get_date().strftime('%Y.%m.%d(%A)')}\n"
-        msg += f"*** {movie['title']} ***\n\n"
-        for play in movie["plays"]:
-            msg += f"{play['time']} {play['remainSeat']}석 / {movie['totSeat']}석\n"
-
+        msg = movie.get_showtime_msg()
         await context.bot.send_message(
             chat_id=context.job.chat_id, text=msg, parse_mode="Markdown"
         )
 
     except KeyError as e:
-        print(f"Missing key in job data: {e}")
+        print(f"Missing key in job data")
 
     except Exception as e:
-        print(f"Failed to send message: {e}")
+        print(f"Failed to send message")

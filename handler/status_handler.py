@@ -13,7 +13,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not chat_jobs:
         await update.message.reply_text(
             "**No active monitoring**\n\n"
-            "Use `/start YYYY.MM.DD Movietitle` to begin monitoring",
+            "Use `/start YYYYMMDD movie_title` to begin monitoring",
             parse_mode="Markdown",
         )
         return
@@ -22,11 +22,10 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i, job in enumerate(chat_jobs, 1):
         job_data = job.data or {}
         title = job_data.get("title", "Unknown")
-        theater = job_data.get("theater")
-        date_str = theater.get_date().strftime("%Y.%m.%d") if theater else "Unknown"
+        date = job_data.get("date")
 
         msg += f"{i}. **{title}**\n"
-        msg += f"   📅 Date: {date_str}\n"
+        msg += f"   📅 Date: {date}\n"
         msg += f"   ⏱️ Interval: {INTERVAL}s\n\n"
 
     msg += "Use `/stop` to stop all monitoring."
