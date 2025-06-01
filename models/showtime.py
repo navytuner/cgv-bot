@@ -12,7 +12,8 @@ class Showtime:
         )
 
     def get_showtime_info(self):
-        return f"{self.date} {self.screen_type} {self.time} {self.remain_seat}석 / {self.tot_seat}석"
+        date = f"{int(self.date[4:6])}월{int(self.date[6:8])}일"
+        return f"{date} {self.screen_type} {self.time} {self.remain_seat}석 / {self.tot_seat}석"
 
     def get_date(self):
         return self.date

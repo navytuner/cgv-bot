@@ -37,9 +37,9 @@ class Movie:
             showtime.display_showtime()
 
     def get_showtime_msg(self):
-        msg = f"{self.title}\n"
-        msg += f"{self.genre} / {self.runtime}분 / {self.open_date} 개봉\n\n"
+        msg = f"🎬 {self.title}\n"
+        msg += f"🎞️ {self.genre} / {self.runtime}분 / {self.open_date} 개봉\n\n"
 
         for showtime in self.showtimes:
-            msg += showtime.get_showtime_info() + "\n"
+            msg += "🍿 " + showtime.get_showtime_info() + "\n"
         return msg
