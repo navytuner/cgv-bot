@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
-from movie import Movie
+from .movie import Movie
 
 
 class Theater:
@@ -52,6 +52,11 @@ class Theater:
             movie.display_showtimes()
             print()
 
+    def get_movie(self, title_search):
+        for movie in self.movies:
+            if title_search in movie.get_title():
+                return movie
+
     def fetch_movies(self, date):
         # Fetch page source
         driver = self._init_web_driver()
@@ -97,8 +102,9 @@ class Theater:
                     )
             self.movies.append(movie)
         driver.quit()
+        print("fetch movies successfully")
 
 
-theater = Theater()
-theater.fetch_movies("20250602")
-theater.display_movies()
+# theater = Theater()
+# theater.fetch_movies("20250602")
+# theater.display_movies()

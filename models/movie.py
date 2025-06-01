@@ -1,4 +1,4 @@
-from showtime import Showtime
+from .showtime import Showtime
 
 
 class Movie:
@@ -21,6 +21,9 @@ class Movie:
     def get_open_date(self):
         return self.open_date
 
+    def get_showtimes(self):
+        return self.showtimes
+
     def insert_showtime(self, date, screen_type, time, remain_seat, tot_seat):
         showtime = Showtime(date, screen_type, time, remain_seat, tot_seat)
         self.showtimes.append(showtime)
@@ -32,3 +35,11 @@ class Movie:
     def display_showtimes(self):
         for showtime in self.showtimes:
             showtime.display_showtime()
+
+    def get_showtime_msg(self):
+        msg = f"{self.title}\n"
+        msg += f"{self.genre} / {self.runtime}분 / {self.open_date} 개봉\n\n"
+
+        for showtime in self.showtimes:
+            msg += showtime.get_showtime_info() + "\n"
+        return msg

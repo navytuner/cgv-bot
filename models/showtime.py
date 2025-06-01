@@ -11,6 +11,9 @@ class Showtime:
             f"{self.date} {self.screen_type} {self.time} {self.remain_seat}석 / {self.tot_seat}석"
         )
 
+    def get_showtime_info(self):
+        return f"{self.date} {self.screen_type} {self.time} {self.remain_seat}석 / {self.tot_seat}석"
+
     def get_date(self):
         return self.date
 
