@@ -25,6 +25,10 @@ class Movie:
         showtime = Showtime(date, screen_type, time, remain_seat, tot_seat)
         self.showtimes.append(showtime)
 
+    def display_movieinfo(self):
+        print(f"{self.title}")
+        print(f"{self.genre} / {self.runtime}분 / {self.open_date} 개봉")
+
     def display_showtimes(self):
         for showtime in self.showtimes:
-            showtime.display()
+            showtime.display_showtime()

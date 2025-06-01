@@ -6,9 +6,10 @@ class Showtime:
         self.remain_seat = remain_seat
         self.tot_seat = tot_seat
 
-    def display(self):
-        print(f"{self.date} {self.screen_type}")
-        print(f"{self.time} {self.remain_seat} / {self.tot_seat}\n")
+    def display_showtime(self):
+        print(
+            f"{self.date} {self.screen_type} {self.time} {self.remain_seat}석 / {self.tot_seat}석"
+        )
 
     def get_date(self):
         return self.date
