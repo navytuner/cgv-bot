@@ -1,7 +1,6 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from models.theater import Theater
-from datetime import datetime
 from config.settings import INTERVAL
 
 
